@@ -1,0 +1,127 @@
+# Based on https://github.com/snapcrafters/ci/blob/main/release-to-candidate/action.yaml
+name: Snap Publish
+description: Build a snap using `snapcraft remote-build` and publish to channel
+
+inputs:
+  architecture:
+    description: "The architecture to build the snap for"
+    default: amd64
+    required: false
+
+  channel:
+    description: "The channel to publish the snap to"
+    default: "latest/edge"
+    required: false
+
+  launchpad-project:
+    description: "The Launchpad project to host the code on"
+    default: ""
+    required: false
+
+  launchpad-token:
+    description: "Launchpad token to trigger the remote build"
+    required: true
+
+  snapcraft-channel:
+    description: "The channel to install Snapcraft from"
+    default: latest/stable
+    required: false
+
+  store-token:
+    description: >
+      A token with permissions to upload and release to the specified
+      channel
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Snapcraft
+      id: snapcraft-setup
+      shell: bash
+      run: |
+        sudo snap install snapcraft --channel "${{inputs.snapcraft-channel}}" --classic
+
+    - name: Setup Launchpad credentials
+      id: launchpad-credentials
+      shell: bash
+      run: |
+        # For versions of snapcraft after 8.2.0, the path is different
+        mkdir -p ~/.local/share/snapcraft/provider/launchpad ~/.local/share/snapcraft
+        echo "${{ inputs.launchpad-token }}" > ~/.local/share/snapcraft/provider/launchpad/credentials
+        echo "${{ inputs.launchpad-token }}" > ~/.local/share/snapcraft/launchpad-credentials
+
+    - name: Find and parse snapcraft.yaml
+      id: snapcraft-yaml
+      uses: snapcrafters/ci/parse-snapcraft-yaml@main
+
+    - name: Snapcraft Build
+      id: snapcraft-remote-build
+      shell: bash
+      env:
+        arch: ${{ inputs.architecture }}
+        name: ${{ steps.snapcraft-yaml.outputs.snap-name }}
+        launchpad_project: ${{ inputs.launchpad-project }}
+        yaml_path: ${{ steps.snapcraft-yaml.outputs.yaml-path }}
+      run: |
+        snapcraft_args=("--launchpad-accept-public-upload")
+        if [[ -n "${launchpad_project}" ]]; then
+          snapcraft_args+=("--project $launchpad_project")
+        fi
+
+        echo "::group::set platform"
+        # shellcheck disable=SC2193
+        if [[ "$(yq -r '.base' "$yaml_path")" == "core24" ]]; then
+          # `core24` uses platforms syntax rather than `architectures`:
+          # https://snapcraft.io/docs/architectures
+          yq -i '.platforms |= {env(arch): {"build-on": env(arch)}}' "$yaml_path"
+          snapcraft_args+=("--platform $arch")
+        elif [[ "${{ steps.setup.outputs.new-remote-build }}" == "false" || "$SNAPCRAFT_REMOTE_BUILD_STRATEGY" == "force-fallback" ]]; then
+          # Restrict arch definition to one only in snapcraft.yaml due to:
+          # https://bugs.launchpad.net/snapcraft/+bug/1885150
+          yq -i '.architectures |= [{"build-on": env(arch)}]' "$yaml_path"
+        else
+          snapcraft_args+=("--build-for $arch")
+        fi
+        echo "::endgroup::"
+
+        echo "::group::remote build"
+        echo '## Snapcraft Remote Build'  >> "$GITHUB_STEP_SUMMARY"
+        # shellcheck disable=SC2068
+        echo Command: \`snapcraft remote-build ${snapcraft_args[@]}\` >> "$GITHUB_STEP_SUMMARY"
+        # shellcheck disable=SC2068
+        if snapcraft remote-build ${snapcraft_args[@]}; then
+          echo Packed: \`$(ls ${name}*${arch}.snap)\` >> "$GITHUB_STEP_SUMMARY"
+          echo "snap=${name}_*_${arch}.snap" >> "$GITHUB_OUTPUT"
+          success=0
+        else
+          echo Remote Build failed
+          success=1
+        fi
+        echo "::endgroup::"
+
+        echo "::group::remote build logs"
+        echo '## Snapcraft Remote Build Logs'  >> "$GITHUB_STEP_SUMMARY"
+        echo '<details>'  >> "$GITHUB_STEP_SUMMARY"
+        echo \`\`\`   >> "$GITHUB_STEP_SUMMARY"
+        cat snapcraft-${name}*${arch}*.txt   >> "$GITHUB_STEP_SUMMARY"
+        echo \`\`\`   >> "$GITHUB_STEP_SUMMARY"
+        echo '</details>'  >> "$GITHUB_STEP_SUMMARY"
+
+        echo "::endgroup::"
+
+        exit $success
+
+    - name: Publish snap to ${{ inputs.channel }}
+      id: snapcraft-publish
+      uses: canonical/action-publish@master
+      with:
+        snap: ${{ steps.snapcraft-remote-build.outputs.snap }}
+        channel: ${{ inputs.channel }}
+      env:
+        SNAPCRAFT_STORE_CREDENTIALS: ${{ inputs.store-token }}
