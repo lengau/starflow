@@ -1,0 +1,24 @@
+name: Cache apt info
+description: Cache deb files and apt archives downloaded to the runner.
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      id: setup
+      run: |
+        sudo chown --recursive $USER /var/cache/apt
+        source /etc/os-release
+        echo version="${VERSION_ID}" >> "${GITHUB_OUTPUT}"
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: /var/cache/apt
+        key: apt-${{ steps.setup.outputs.version }}-${{ runner.arch }}-${{ github.workflow_sha }}
+    - name: Fix permissions for apt cache
+      uses: pyTooling/Actions/with-post-step@v1.0.7
+      with:
+        main: |
+          sudo chown --recursive root /var/cache/apt
+        post: |
+          sudo chown --recursive $USER /var/cache/apt
