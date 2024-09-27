@@ -62,3 +62,35 @@ jobs:
       # Use the standard extra args and ignore spread tests
       trivy-extra-args: '--severity HIGH,CRITICAL --ignore-unfixed --skip-dirs "tests/spread/**"'
 ```
+
+## Go security scanner
+
+The Go security scanner workflow uses several tools (trivy, osv-scanner) to scan a
+Go project for security issues.
+
+### Usage
+
+An example workflow for your own Go project that will use this workflow:
+
+```yaml
+name: Security scan
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - hotfix/*
+
+jobs:
+  go-scans:
+    name: Scan Go project
+    uses: canonical/starflow/.github/workflows/scan-golang.yaml@main
+    with:
+      # Additional packages to install on the Ubuntu runners for building
+      packages: protoc-gen-go-1-3
+      # Additional arguments to pass to osv-scanner.
+      # This example adds configuration from your project.
+      osv-extra-args: "--config=.osv-scanner.toml"
+      # Use the standard extra args and ignore spread tests
+      trivy-extra-args: '--skip-dirs "tests/spread/**"'
+```
