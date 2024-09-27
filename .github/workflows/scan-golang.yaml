@@ -1,0 +1,64 @@
+name: Run security scans for a Python project
+
+on:
+  workflow_call:
+    inputs:
+      packages:
+        required: false
+        type: string
+        description: |
+          Packages to install with apt when building the wheel or scanning with trivy
+          This can be useful if creating a virtual environment has extra build-deps.
+      osv-extra-args:
+        required: false
+        type: string
+        default: ""
+        description: |
+          Additional arguments to pass to osv-scanner.
+      trivy-extra-args:
+        required: false
+        type: string
+        default: "--severity HIGH,CRITICAL --ignore-unfixed"
+        description: Additional arguments to pass to trivy.
+
+jobs:
+  scan-trivy:
+    name: Trivy
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Install tools
+        run: |
+          trivy_job=$(sudo snap install --no-wait trivy)
+          uv_job=$(sudo snap install --no-wait --classic astral-uv)
+          if [[ -n "${{ inputs.packages }}" ]]; then
+            sudo apt-get update
+            sudo apt-get --yes install ${{ inputs.packages }}
+          fi
+          snap watch $trivy_job
+          snap watch $uv_job
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Scan project
+        if: ${{ !cancelled() }}
+        run: |
+          trivy fs ${{ inputs.trivy-extra-args }} .
+  scan-osv:
+    name: OSV-scanner
+    runs-on: [ubuntu-latest]
+    env:
+      UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
+    steps:
+      - name: Install tools
+        run: |
+          osv_job=$(sudo snap install --no-wait osv-scanner)
+          if [[ -n "${{ inputs.packages }}" ]]; then
+            sudo apt-get update
+            sudo apt-get --yes install ${{ inputs.packages }}
+          fi
+          snap watch $osv_job
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Scan project
+        if: ${{ !cancelled() }}
+        run: |
+          osv-scanner ${{ inputs.osv-extra-args }} .
