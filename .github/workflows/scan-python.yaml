@@ -72,6 +72,19 @@ jobs:
     env:
       UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
     steps:
+      # The next two steps combine to create a monthly cache for the trivy database.
+      # This reduces the chances of TOOMANYREQUESTS issues when downloading the
+      # vulnerability db, but won't bloat the cache because the cache gets dropped
+      # on a monthly basis.
+      - name: Create a cache key
+        id: cache-key
+        run: |
+          echo "cache_key=${{ runner.os }}-$(date +%Y-%m)" >> $GITHUB_OUTPUT
+      - name: Cache trivy database
+        uses: actions/cache@v4
+        with:
+          path: ~/snap/trivy
+          key: trivy-db-${{ steps.cache-key-outputs-cache_key }}
       - name: Install tools
         run: |
           trivy_job=$(sudo snap install --no-wait trivy)
