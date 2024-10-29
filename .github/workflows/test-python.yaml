@@ -53,14 +53,16 @@ jobs:
         shell: bash
         run: |
           for python_version in $(echo '${{ inputs.unit-python-versions }}' | jq -r .[] | tr '\n' ' '); do
-            make setup-tests UV_PROJECT_ENVIRONMENT="${{ runner.temp }}/venv_${python_version}"
+            python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
+            make setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}"
           done
       - name: Run tests
         shell: bash
         run: |
           for python_version in $(echo '${{ inputs.unit-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             echo "::group::Python ${python_version}"
-            make coverage UV_PROJECT_ENVIRONMENT="${{ runner.temp }}/venv_${python_version}"
+            python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
+            make coverage UV_PROJECT_ENVIRONMENT="${python_dirname}"
             echo "::endgroup::"
           done
       - name: Upload coverage
