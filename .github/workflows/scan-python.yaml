@@ -72,6 +72,13 @@ jobs:
     env:
       UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
     steps:
+      - name: Cache trivy database
+        uses: actions/cache@v4
+        with:
+          path: ~/snap/trivy
+          key: trivy-db
+          restore-keys: |
+            trivy-
       - name: Install tools
         run: |
           trivy_job=$(sudo snap install --no-wait trivy)
