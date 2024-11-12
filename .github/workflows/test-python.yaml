@@ -66,7 +66,6 @@ jobs:
             echo "::endgroup::"
           done
       - name: Upload coverage
-        if: ${{ inputs.target == 'coverage' }}
         uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ matrix.platform }}-${{ matrix.python-version }}
