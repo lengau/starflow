@@ -45,5 +45,5 @@ test-unit:
 .PHONY: test-integration
 test-integration:
 
-.PHONY: coverage
-coverage:
+.PHONY: test-coverage
+test-coverage:

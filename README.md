@@ -158,13 +158,13 @@ several forms. It:
 #. Runs unit tests on Ubuntu with the oldest supported python version and uv resolution
 set to `lowest`.
 #. Integration tests across multiple platforms and Python versions.
-#. Uploads coverage for unit tests as artefacts.
+#. Uploads test coverage for unit tests as artefacts.
 #. Runs TICS analysis on unit tests
 
 In order to do so, it expects the following `make` targets:
 
 - `setup-tests`: Configures the system, installing any other necessary tools.
-- `coverage`: Runs unit tests with test coverage
+- `test-coverage`: Runs unit tests with test coverage
 - `test-integration`: Runs integration tests
 
 Because we use the snaps of [codespell](https://snapcraft.io/codespell),

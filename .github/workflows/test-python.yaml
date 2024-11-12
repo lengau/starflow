@@ -62,10 +62,10 @@ jobs:
           for python_version in $(echo '${{ inputs.unit-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             echo "::group::Python ${python_version}"
             python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
-            make coverage UV_PROJECT_ENVIRONMENT="${python_dirname}"
+            make test-coverage UV_PROJECT_ENVIRONMENT="${python_dirname}"
             echo "::endgroup::"
           done
-      - name: Upload coverage
+      - name: Upload test coverage
         uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ matrix.platform }}-${{ matrix.python-version }}
@@ -95,7 +95,7 @@ jobs:
           make setup-tests
       - name: Run unit tests
         run: |
-          make coverage
+          make test-coverage
   integration:
     strategy:
       matrix:
