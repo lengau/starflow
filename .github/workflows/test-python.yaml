@@ -73,16 +73,6 @@ jobs:
           path: |
             ./coverage.xml
             htmlcov/**
-      - name: Run TICS analysis
-        uses: tiobe/tics-github-action@v3
-        if: ${{ runner.os == 'Linux' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/tics') }}
-        with:
-          mode: qserver
-          project: ${{ github.repository }}
-          viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=default
-          branchdir: ${{ github.workspace }}
-          ticsAuthToken: ${{ secrets.TICSAUTHTOKEN }}
-          installTics: true
   unit-lowest:
     name: unit (minimum deps)
     if: ${{ inputs.lowest-python-version }} != ''
