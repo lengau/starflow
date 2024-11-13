@@ -154,18 +154,17 @@ jobs:
 The Python test runner workflow uses GitHub workflows and `uv` to run Python tests in
 several forms. It:
 
-#. Runs unit tests across multiple platforms and Python versions.
-#. Runs unit tests on Ubuntu with the oldest supported python version and uv resolution
+#. Runs fast tests across multiple platforms and Python versions.
+#. Runs all tests on Ubuntu with the oldest supported python version and uv resolution
 set to `lowest`.
-#. Integration tests across multiple platforms and Python versions.
-#. Uploads test coverage for unit tests as artefacts.
-#. Runs TICS analysis on unit tests
+#. Runs slow tests across their own set of platforms and Python versions.
+#. Uploads test coverage for tests as artefacts.
 
 In order to do so, it expects the following `make` targets:
 
 - `setup-tests`: Configures the system, installing any other necessary tools.
-- `test-coverage`: Runs unit tests with test coverage
-- `test-integration`: Runs integration tests
+- `test-coverage`: Runs tests with test coverage. Fast and slow tests will use the
+  `PYTEST_ADDOPTS` environment variable to run with or without the `slow` mark.
 
 Because we use the snaps of [codespell](https://snapcraft.io/codespell),
 [ruff](https://snapcraft.io/ruff) and [shellcheck](https://snapcraft.io/shellcheck)
