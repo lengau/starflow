@@ -5,31 +5,31 @@ on:
       fast-platforms:
         required: false
         type: string
-        default: '["jammy", "noble", "windows-latest", "macos-latest"]'
+        default: '["jammy", "noble"]'
         description: |
-          The platforms to run unit tests on, as a JSON array.
+          The platforms to run fast tests on, as a JSON array.
       fast-python-versions:
         required: false
         type: string
         default: '["3.10", "3.11", "3.12", "3.13"]'
         description: |
-          The python versions to run unit tests on, as a JSON array.
+          The python versions to run fast tests on, as a JSON array.
       lowest-python-version:
         required: false
         type: string
         description: |
-          The Python version to run when using "lowest" resolution for unit tests.
+          The Python version to run when using "lowest" resolution for tests.
       slow-platforms:
         type: string
-        default: '["jammy", "windows-latest", "macos-latest"]'
+        default: '["jammy"]'
         description: |
-          The platforms to run integration tests on, as a JSON array.
+          The platforms to run slow tests on, as a JSON array.
       slow-python-versions:
         required: false
         type: string
         default: '["3.10"]'
         description: |
-          The python versions to run integration tests on, as a JSON array.
+          The python versions to run slow tests on, as a JSON array.
 
 jobs:
   fast:
@@ -47,7 +47,7 @@ jobs:
         uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
-          cache-suffix: ${{ matrix.platform }}
+          cache-suffix: ${{ toJSON(matrix.platform) }}
       - name: Set up tests
         shell: bash
         run: |
@@ -127,7 +127,7 @@ jobs:
         uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
-          cache-suffix: ${{ matrix.platform }}
+          cache-suffix: ${{ toJSON(matrix.platform) }}
       - name: Install tools
         run: |
           make setup-tests
