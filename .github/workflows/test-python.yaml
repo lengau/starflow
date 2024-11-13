@@ -2,13 +2,13 @@ name: Test Python
 on:
   workflow_call:
     inputs:
-      unit-platforms:
+      fast-platforms:
         required: false
         type: string
         default: '["ubuntu-22.04", "ubuntu-24.04", "windows-latest", "macos-latest"]'
         description: |
           The platforms to run unit tests on, as a JSON array.
-      unit-python-versions:
+      fast-python-versions:
         required: false
         type: string
         default: '["3.10", "3.11", "3.12", "3.13"]'
@@ -19,12 +19,12 @@ on:
         type: string
         description: |
           The Python version to run when using "lowest" resolution for unit tests.
-      integration-platforms:
+      slow-platforms:
         type: string
         default: '["ubuntu-latest", "windows-latest", "macos-latest"]'
         description: |
           The platforms to run integration tests on, as a JSON array.
-      integration-python-versions:
+      slow-python-versions:
         required: false
         type: string
         default: '["3.10"]'
@@ -32,13 +32,12 @@ on:
           The python versions to run integration tests on, as a JSON array.
 
 jobs:
-  unit:
+  fast:
+    name: Fast tests
     strategy:
       matrix:
-        platform: ${{ fromJson(inputs.unit-platforms) }}
+        platform: ${{ fromJson(inputs.fast-platforms) }}
     runs-on: ${{ matrix.platform }}
-    env:
-      UV_PYTHON: ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -52,29 +51,35 @@ jobs:
       - name: Set up tests
         shell: bash
         run: |
-          for python_version in $(echo '${{ inputs.unit-python-versions }}' | jq -r .[] | tr '\n' ' '); do
+          for python_version in $(echo '${{ inputs.fast-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
             make setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}"
           done
       - name: Run tests
         shell: bash
         run: |
-          for python_version in $(echo '${{ inputs.unit-python-versions }}' | jq -r .[] | tr '\n' ' '); do
+          exit_code=0
+          for python_version in $(echo '${{ inputs.fast-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             echo "::group::Python ${python_version}"
             python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
-            make test-coverage UV_PROJECT_ENVIRONMENT="${python_dirname}"
+            if ! make test-coverage UV_PROJECT_ENVIRONMENT="${python_dirname}" PYTEST_ADDOPTS="-m 'not slow'"
+            then
+              exit_code=1
+              echo "::error title=TESTS FAILED::Tests failed with Python ${python_version}"
+            fi
             echo "::endgroup::"
           done
+          exit $exit_code
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-${{ matrix.platform }}-${{ matrix.python-version }}
+          name: coverage-fast-${{ matrix.platform }}
           overwrite: true
           path: |
             ./coverage.xml
             htmlcov/**
-  unit-lowest:
-    name: unit (minimum deps)
+  lowest:
+    name: Minimum dependencies (all tests)
     if: ${{ inputs.lowest-python-version }} != ''
     runs-on: ubuntu-20.04
     env:
@@ -96,12 +101,23 @@ jobs:
       - name: Run unit tests
         run: |
           make test-coverage
-  integration:
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lowest
+          overwrite: true
+          path: |
+            ./coverage.xml
+            htmlcov/**
+  slow:
+    name: Slow tests
     strategy:
       matrix:
-        platform: ${{ fromJson(inputs.integration-platforms) }}
-        python-version: ${{ fromJson(inputs.integration-python-versions) }}
+        platform: ${{ fromJson(inputs.slow-platforms) }}
+        python-version: ${{ fromJson(inputs.slow-python-versions) }}
     runs-on: ${{ matrix.platform }}
+    env:
+      PYTEST_ADDOPTS: --no-header -v -rN -m 'not slow'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -117,6 +133,12 @@ jobs:
           make setup-tests
       - name: Integration tests
         run: |
-          make test-integration
-        env:
-          PYTEST_ADDOPTS: "--no-header -v -rN"
+          make test-coverage
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-slow-${{ matrix.platform }}-${{ matrix.python-version }}
+          overwrite: true
+          path: |
+            ./coverage.xml
+            htmlcov/**

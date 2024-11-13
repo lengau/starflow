@@ -39,11 +39,8 @@ setup-tests:
 	echo "Installing nothing..."
 	echo "Installed!"
 
-.PHONY: test-unit
-test-unit:
-
-.PHONY: test-integration
-test-integration:
-
 .PHONY: test-coverage
 test-coverage:
+	$(info Simulating coverage creation)
+	$(info "Running tests with extra pytest options: ${PYTEST_ADDOPTS}")
+	@touch coverage.xml

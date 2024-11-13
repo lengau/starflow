@@ -10,8 +10,8 @@ jobs:
   test-python-custom:
     uses: ./.github/workflows/test-python.yaml
     with:
-      unit-platforms: '["ubuntu-latest"]'
-      unit-python-versions: '["3.14"]'
-      integration-platforms: '["ubuntu-latest"]'
-      integration-python-versions: '["3.14"]'
+      fast-platforms: '["ubuntu-latest"]'
+      fast-python-versions: '["3.14"]'
+      slow-platforms: '["ubuntu-latest"]'
+      slow-python-versions: '["3.14"]'
       lowest-python-version: '["3.0"]'
