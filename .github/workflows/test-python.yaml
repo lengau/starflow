@@ -98,7 +98,7 @@ jobs:
       - name: Install tools
         run: |
           make setup-tests
-      - name: Run unit tests
+      - name: Run tests
         run: |
           make test-coverage
       - name: Upload test coverage
@@ -131,7 +131,7 @@ jobs:
       - name: Install tools
         run: |
           make setup-tests
-      - name: Integration tests
+      - name: Run tests
         run: |
           make test-coverage
       - name: Upload test coverage
