@@ -5,7 +5,7 @@ on:
       fast-platforms:
         required: false
         type: string
-        default: '["ubuntu-22.04", "ubuntu-24.04", "windows-latest", "macos-latest"]'
+        default: '["jammy", "noble", "windows-latest", "macos-latest"]'
         description: |
           The platforms to run unit tests on, as a JSON array.
       fast-python-versions:
@@ -21,7 +21,7 @@ on:
           The Python version to run when using "lowest" resolution for unit tests.
       slow-platforms:
         type: string
-        default: '["ubuntu-latest", "windows-latest", "macos-latest"]'
+        default: '["jammy", "windows-latest", "macos-latest"]'
         description: |
           The platforms to run integration tests on, as a JSON array.
       slow-python-versions:
@@ -81,7 +81,7 @@ jobs:
   lowest:
     name: Minimum dependencies (all tests)
     if: ${{ inputs.lowest-python-version }} != ''
-    runs-on: ubuntu-20.04
+    runs-on: jammy
     env:
       UV_PYTHON: ${{ inputs.lowest-python-version }}
       UV_RESOLUTION: lowest
