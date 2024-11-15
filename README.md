@@ -154,11 +154,11 @@ jobs:
 The Python test runner workflow uses GitHub workflows and `uv` to run Python tests in
 several forms. It:
 
-#. Runs fast tests across multiple platforms and Python versions.
-#. Runs all tests on Ubuntu with the oldest supported python version and uv resolution
+- Runs fast tests across multiple platforms and Python versions.
+- Runs all tests on Ubuntu with the oldest supported python version and uv resolution
 set to `lowest`.
-#. Runs slow tests across their own set of platforms and Python versions.
-#. Uploads test coverage for tests as artefacts.
+- Runs slow tests across their own set of platforms and Python versions.
+- Uploads test coverage for tests as artefacts.
 
 In order to do so, it expects the following `make` targets:
 
