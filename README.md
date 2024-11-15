@@ -156,7 +156,7 @@ several forms. It:
 
 - Runs fast tests across multiple platforms and Python versions.
 - Runs all tests on Ubuntu with the oldest supported python version and uv resolution
-set to `lowest`.
+  set to `lowest`.
 - Runs slow tests across their own set of platforms and Python versions.
 - Uploads test coverage for tests as artefacts.
 
