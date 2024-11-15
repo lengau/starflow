@@ -12,8 +12,8 @@ jobs:
     with:
       # Test on many OS's to ensure that these workflows work everywhere.
       # Also ensure we can add a list of tags for self-hosted runners.
-      fast-platforms: '[["jammy", "amd64"], ["noble", "arm64"], "ubuntu-22.04", "windows-latest", "macos-latest"]'
-      fast-python-versions: '["3.14"]'
-      slow-platforms: '["ubuntu-latest"]'
-      slow-python-versions: '["3.14"]'
+      fast-test-platforms: '[["jammy", "amd64"], ["noble", "arm64"], "ubuntu-22.04", "windows-latest", "macos-latest"]'
+      fast-test-python-versions: '["3.14"]'
+      slow-test-platforms: '["ubuntu-latest"]'
+      slow-test-python-versions: '["3.14"]'
       lowest-python-version: '["3.0"]'

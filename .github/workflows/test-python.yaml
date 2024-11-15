@@ -2,13 +2,13 @@ name: Test Python
 on:
   workflow_call:
     inputs:
-      fast-platforms:
+      fast-test-platforms:
         required: false
         type: string
         default: '["jammy", "noble"]'
         description: |
           The platforms to run fast tests on, as a JSON array.
-      fast-python-versions:
+      fast-test-python-versions:
         required: false
         type: string
         default: '["3.10", "3.11", "3.12", "3.13"]'
@@ -19,12 +19,12 @@ on:
         type: string
         description: |
           The Python version to run when using "lowest" resolution for tests.
-      slow-platforms:
+      slow-test-platforms:
         type: string
         default: '["jammy"]'
         description: |
           The platforms to run slow tests on, as a JSON array.
-      slow-python-versions:
+      slow-test-python-versions:
         required: false
         type: string
         default: '["3.10"]'
@@ -36,7 +36,7 @@ jobs:
     name: Fast tests
     strategy:
       matrix:
-        platform: ${{ fromJson(inputs.fast-platforms) }}
+        platform: ${{ fromJson(inputs.fast-test-platforms) }}
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
       - name: Set up tests
         shell: bash
         run: |
-          for python_version in $(echo '${{ inputs.fast-python-versions }}' | jq -r .[] | tr '\n' ' '); do
+          for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
             make setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}"
           done
@@ -59,7 +59,7 @@ jobs:
         shell: bash
         run: |
           exit_code=0
-          for python_version in $(echo '${{ inputs.fast-python-versions }}' | jq -r .[] | tr '\n' ' '); do
+          for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             echo "::group::Python ${python_version}"
             python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
             if ! make test-coverage UV_PROJECT_ENVIRONMENT="${python_dirname}" PYTEST_ADDOPTS="-m 'not slow'"
@@ -113,8 +113,8 @@ jobs:
     name: Slow tests
     strategy:
       matrix:
-        platform: ${{ fromJson(inputs.slow-platforms) }}
-        python-version: ${{ fromJson(inputs.slow-python-versions) }}
+        platform: ${{ fromJson(inputs.slow-test-platforms) }}
+        python-version: ${{ fromJson(inputs.slow-test-python-versions) }}
     runs-on: ${{ matrix.platform }}
     env:
       PYTEST_ADDOPTS: --no-header -v -rN -m 'slow'
