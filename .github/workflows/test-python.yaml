@@ -117,7 +117,7 @@ jobs:
         python-version: ${{ fromJson(inputs.slow-python-versions) }}
     runs-on: ${{ matrix.platform }}
     env:
-      PYTEST_ADDOPTS: --no-header -v -rN -m 'not slow'
+      PYTEST_ADDOPTS: --no-header -v -rN -m 'slow'
     steps:
       - uses: actions/checkout@v4
         with:
