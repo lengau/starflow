@@ -12,10 +12,6 @@ on:
         default: '["3.10", "3.11", "3.12", "3.13"]'
         description: |
           The python versions to run fast tests on, as a JSON array.
-      lowest-python-version:
-        type: string
-        description: |
-          The Python version to run when using "lowest" resolution for tests.
       slow-test-platforms:
         type: string
         default: '["jammy"]'
@@ -26,6 +22,16 @@ on:
         default: '["3.10"]'
         description: |
           The python versions to run slow tests on, as a JSON array.
+      lowest-python-platform:
+        type: string
+        description: |
+          The platform to run the lowest python version tests on.
+        default: "ubuntu-20.04"
+      lowest-python-version:
+        type: string
+        description: |
+          The Python version to run when using "lowest" resolution for tests.
+        default: "3.10"
 
 jobs:
   fast:
@@ -74,37 +80,6 @@ jobs:
           path: |
             ./coverage.xml
             htmlcov/**
-  lowest:
-    name: Minimum dependencies (all tests)
-    if: ${{ inputs.lowest-python-version }} != ''
-    runs-on: jammy
-    env:
-      UV_PYTHON: ${{ inputs.lowest-python-version }}
-      UV_RESOLUTION: lowest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Set up uv with caching
-        id: setup-uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          enable-cache: true
-          cache-suffix: lowest-jammy
-      - name: Install tools
-        run: |
-          make setup-tests
-      - name: Run tests
-        run: |
-          make test-coverage
-      - name: Upload test coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-lowest-py${{ inputs.lowest-python-version }}
-          overwrite: true
-          path: |
-            ./coverage.xml
-            htmlcov/**
   slow:
     name: Slow tests
     strategy:
@@ -134,6 +109,37 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-slow-${{ matrix.platform }}-${{ matrix.python-version }}
+          overwrite: true
+          path: |
+            ./coverage.xml
+            htmlcov/**
+  lowest:
+    name: Minimum dependencies (all tests)
+    if: ${{ inputs.lowest-python-version }} != ''
+    runs-on: ${{ inputs.lowest-python-platform }}
+    env:
+      UV_PYTHON: ${{ inputs.lowest-python-version }}
+      UV_RESOLUTION: lowest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up uv with caching
+        id: setup-uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-suffix: lowest-jammy
+      - name: Install tools
+        run: |
+          make setup-tests
+      - name: Run tests
+        run: |
+          make test-coverage
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lowest-py${{ inputs.lowest-python-version }}
           overwrite: true
           path: |
             ./coverage.xml
