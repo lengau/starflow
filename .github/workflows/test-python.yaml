@@ -94,7 +94,7 @@ jobs:
         uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
-          cache-suffix: ${{ matrix.platform }}
+          cache-suffix: lowest-jammy
       - name: Install tools
         run: |
           make setup-tests
