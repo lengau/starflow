@@ -1,4 +1,4 @@
-name: Lint
+name: Lint Python
 on:
   workflow_call:
   # Because we have a uv.lock file, we can also use this workflow to lint ourselves.
