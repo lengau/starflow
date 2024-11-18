@@ -8,6 +8,60 @@ Some of these automations are provided as [Reusable workflows](https://docs.gith
 For these workflows, you can embed them in a workflow you run at the `job` level.
 Examples are provided below.
 
+## Lint
+
+The lint workflow installs and runs the relevant linters for the repository. It expects the following
+`make` targets:
+
+- `setup-lint`: Installs relevant linters (only needs to work on Ubuntu)
+- `lint`: Runs relevant linters
+
+### Usage
+
+An example workflow:
+
+```yaml
+name: QA
+on:
+  push:
+    branches:
+      - "main"
+      - "feature/*"
+      - "hotfix/*"
+      - "release/*"
+      - "renovate/*"
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lengau/starflow/lint@work/CRAFT-3602/test-workflows
+```
+
+## Policy check
+
+The policy check workflow checks that contributions to the project follow both Canonical corporate policy
+and team policy. It checks:
+
+- That the user has signed the Canonical CLA
+- That commits follow [Starcraft team standards using Conventional Commits](https://github.com/canonical/starbase/blob/main/HACKING.rst#commits)
+
+### Usage
+
+An example workflow that uses this reusable workflow:
+
+```yaml
+name: Check policy
+on:
+  pull_request:
+
+jobs:
+  policy:
+    uses: canonical/starflow/.github/workflows/policy.yaml@main
+```
+
 ## Python security scanner
 
 The Python security scanner workflow uses several tools (trivy, osv-scanner) to scan a
@@ -93,4 +147,37 @@ jobs:
       osv-extra-args: "--config=.osv-scanner.toml"
       # Use the standard extra args and ignore spread tests
       trivy-extra-args: '--skip-dirs "tests/spread/**"'
+```
+
+## Python test runner
+
+The Python test runner workflow uses GitHub workflows and `uv` to run Python tests in
+several forms. It:
+
+- Runs fast tests across multiple platforms and Python versions.
+- Runs all tests on Ubuntu with the oldest supported python version and uv resolution
+  set to `lowest`.
+- Runs slow tests across their own set of platforms and Python versions.
+- Uploads test coverage for tests as artefacts.
+
+In order to do so, it expects the following `make` targets:
+
+- `setup-tests`: Configures the system, installing any other necessary tools.
+- `test-coverage`: Runs tests with test coverage. Fast and slow tests will use the
+  `PYTEST_ADDOPTS` environment variable to run with or without the `slow` mark.
+
+Because we use the snaps of [codespell](https://snapcraft.io/codespell),
+[ruff](https://snapcraft.io/ruff) and [shellcheck](https://snapcraft.io/shellcheck)
+frequently, this workflow installs those as well as uv.
+
+An example workflow:
+
+```yaml
+name: Test Python
+on:
+  pull_request:
+
+jobs:
+  test:
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
 ```
