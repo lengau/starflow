@@ -167,7 +167,7 @@ jobs:
         if: ${{ hashFiles('source/uv.lock') != ''}}
         run: |
           cd source
-          uv sync ${{ uv-sync-extra-args }}
+          uv sync ${{ inputs.uv-sync-extra-args }}
           trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} .venv
   scan-osv:
     name: OSV-scanner
